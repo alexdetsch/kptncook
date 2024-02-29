@@ -152,7 +152,7 @@ class Recipe(RecipeSummary):
 
 
 class RecipeWithImage(Recipe):
-    image_url: str
+    image_url: str | None = []
 
 
 class MealieApiClient:
@@ -244,8 +244,11 @@ class MealieApiClient:
     def _scrape_image_for_recipe(self, recipe, slug):
         json_image_url = json.dumps({"url": recipe.image_url})
         scrape_image_path = f"/recipes/{slug}/image"
-        r = self.post(scrape_image_path, data=json_image_url)
-        r.raise_for_status()
+        try:
+            r = self.post(scrape_image_path, data=json_image_url)
+            r.raise_for_status()
+        except:
+            print(str(json_image_url))
 
     def _update_user_and_group_id(self, recipe, slug):
         recipe_detail_path = f"/recipes/{slug}"
@@ -333,7 +336,8 @@ class MealieApiClient:
         slug = self._post_recipe_trunk_and_get_slug(recipe.name)
         print(slug)
         recipe.slug = slug
-        self._scrape_image_for_recipe(recipe, slug)
+        if recipe.image_url is not None:
+            self._scrape_image_for_recipe(recipe, slug)
         recipe = self._update_user_and_group_id(recipe, slug)
         recipe = self._update_item_ids(recipe, "units", RecipeUnit, "unit")
         recipe = self._update_item_ids(recipe, "foods", RecipeFood, "food")
